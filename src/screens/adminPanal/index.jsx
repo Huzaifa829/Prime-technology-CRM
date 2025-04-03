@@ -5,15 +5,18 @@ import UsersTable from "./UsersTable.jsx";
 import { useState } from "react";
 import CreateUserModal from "./modals/createUserModal.jsx";
 import CreateServiceModal from "./modals/createServiceModal.jsx";
+import CreateBrandModal from "./modals/CreateBrandModal.jsx";
 
 export default function AdminPanel() {
   const [userModal,setUserModal] = useState(false)
   const [serviceModal,setServiceModal] = useState(false)
+  const [brandModal,setBrandModal] = useState(false)
   return (
     <div className="p-6 space-y-6">
       {/* Buttons */}
       <div className="flex justify-between">
         <Button onClick={()=>setServiceModal(true)}>Add Service</Button>
+        <Button onClick={()=>setBrandModal(true)}>Add Brand</Button>
         <Button  onClick={()=>setUserModal(true)} >Create User</Button>
       </div>
 
@@ -33,6 +36,7 @@ export default function AdminPanel() {
       </div>
       <CreateUserModal open={userModal} onClose={()=>setUserModal(false)}/>
       <CreateServiceModal open={serviceModal} onClose={()=>setServiceModal(false)}/>
+      <CreateBrandModal open={brandModal} onClose={()=>setBrandModal(false)}/>
     </div>
   );
 }

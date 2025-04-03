@@ -8,6 +8,7 @@ import AdminPanel from "./screens/adminPanal";
 import { Provider } from "react-redux";
 import { store } from "./Redux-config/store/store";
 import LoginPage from "./screens/loginPage/LoginPage";
+import ProtectedRoutes from "./ProtectedRoutes";
 
 const route = createBrowserRouter([
   {
@@ -18,8 +19,8 @@ const route = createBrowserRouter([
     path: "/dashboard",
     element: <Layout />,
     children: [
-      { index: true, element: <AdminPanel /> }, 
-      { path: "admin", element: <AdminPanel/> },
+      { index: true, element: <ProtectedRoutes role="admin" component={<AdminPanel/>}/> }, 
+      { path: "admin", element: <ProtectedRoutes role="admin" component={<AdminPanel/>}/>},
       { path: "BrandManagement", element: <div>Brand Management </div> },
       { path: "calendar", element: <div>calendar</div> },
     ],

@@ -15,7 +15,11 @@ import AssignBrandSelect from "@/components/reusableComponents/AssignBrandSelect
 import AssignRoleSelect from "@/components/reusableComponents/AssignRoleSelect";
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
-import { getLoggedInUserUID, signUpUser } from "@/DB/firebaseFunctions";
+import {
+  getLoggedInUserUID,
+  loginWithFirebase,
+  signUpUser,
+} from "@/DB/firebaseFunctions";
 import { useDispatch, useSelector } from "react-redux";
 import { addUserData } from "@/Redux-config/reducers/userSlice";
 import { auth } from "@/DB/firebase.config";
@@ -33,6 +37,8 @@ export default function CreateUserModal({ open, onClose }) {
   const [asnBrand, setAsnBrand] = useState(false);
   const [CreateBtnLoading, setCreateBtnLoading] = useState(false);
   const dispatch = useDispatch();
+  const loginUser = useSelector((state) => state.auth.user);
+  const brands = useSelector((state) => state.brands.brands);
 
   const handleClose = () => {
     methods.reset();
@@ -53,6 +59,14 @@ export default function CreateUserModal({ open, onClose }) {
     if (savedUser) {
       const { createdAt, ...serializableUser } = savedUser;
       dispatch(addUserData(serializableUser));
+
+      const againLoginAdmin = await loginWithFirebase(
+        loginUser.email,
+        loginUser.password
+      );
+
+      console.log(againLoginAdmin);
+
       Swal.fire({
         title: "Success!",
         text: "User registered successfully!",
@@ -62,18 +76,18 @@ export default function CreateUserModal({ open, onClose }) {
 
       handleClose(); // Close modal after successful signup
       const user = auth.currentUser;
-console.log('recent created user',serializableUser);
-getLoggedInUserUID()
-  .then((uid) => {
-    if (uid) {
-      console.log("Logged-in User UID:", uid);
-    } else {
-      console.log("No user is logged in.");
-    }
-  })
-  .catch((error) => {
-    console.error("Error fetching user UID:", error);
-  });
+      console.log("recent created user", serializableUser);
+      getLoggedInUserUID()
+        .then((uid) => {
+          if (uid) {
+            console.log("Logged-in User UID:", uid);
+          } else {
+            console.log("No user is logged in.");
+          }
+        })
+        .catch((error) => {
+          console.error("Error fetching user UID:", error);
+        });
       if (user) {
         console.log("User ID current user:", user.uid);
       } else {
@@ -151,12 +165,8 @@ getLoggedInUserUID()
             />
             {asnBrand ? (
               <AssignBrandSelect
-                brands={[
-                  { id: "asjd", name: "helloworld" },
-                  { id: "asjd2", name: "helloworld2" },
-                  { id: "asjd3", name: "helloworld3" },
-                ]}
-                onChange={(value) => methods.setValue("brand", value)}
+                brands={brands} // Pass your global brands here
+                onChange={(value) => methods.setValue("brand", value)} // Pass selected brand IDs to the parent form
               />
             ) : (
               ""

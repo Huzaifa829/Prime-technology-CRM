@@ -6,16 +6,28 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import CustomInput from "@/components/reusableComponents/CustomInput";
 import Swal from "sweetalert2";
 import { loginWithFirebase } from "@/DB/firebaseFunctions";
+import { useDispatch } from "react-redux";
+import { setUser } from "@/Redux-config/reducers/authSlice";
 
 const LoginPage = () => {
   const methods = useForm();
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async (data) => {
     setLoading(true);
     try {
-      await loginWithFirebase(data.email, data.password);
+      const userData = await loginWithFirebase(data.email, data.password);
+
+      // Redux store mai user ka complete data save karein
+      const formattedUserData = {
+        ...userData,
+        createdAt: userData.createdAt ? userData.createdAt.toDate().toISOString() : null, // Convert to string
+      };
+    
+      dispatch(setUser(formattedUserData));
+      
       Swal.fire({
         icon: "success",
         title: "Login Successful",
@@ -33,6 +45,8 @@ const LoginPage = () => {
             text: "Please check your email and password or contact your admin.",
         });
         setLoading(false);
+        console.log(error);
+        
       
     }
   };
