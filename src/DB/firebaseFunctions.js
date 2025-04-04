@@ -7,6 +7,7 @@ import { auth, db } from "./firebase.config";
 import {
   addDoc,
   collection,
+  deleteDoc,
   doc,
   getDoc,
   getDocs,
@@ -16,6 +17,7 @@ import {
   setDoc,
   startAfter,
   Timestamp,
+  updateDoc,
   where,
 } from "firebase/firestore";
 
@@ -143,7 +145,76 @@ export const getAllBrands = async () => {
     throw new Error("Failed to fetch brands: " + error.message);
   }
 };
+export const updateBrandInFirebase = async (id, oldName, newName) => {
+  const brandsCollection = collection(db, "brands");
+  const usersCollection = collection(db, "users");
 
+  // Check if the new name already exists in the brands collection
+  const brandsSnapshot = await getDocs(brandsCollection);
+  const existingBrand = brandsSnapshot.docs.find(
+    (doc) => doc.id !== id && doc.data().name.toLowerCase() === newName.toLowerCase()
+  );
+
+  if (existingBrand) {
+    throw new Error("Brand name already exists!");
+  }
+
+  // Step 1: Update the brand name in the 'brands' collection
+  const brandRef = doc(db, "brands", id);
+  await updateDoc(brandRef, { name: newName });
+
+  // Step 2: Find users who have this brand name in their 'brands' array
+  const usersSnapshot = await getDocs(usersCollection);
+  
+  const usersToUpdate = usersSnapshot.docs.filter((userDoc) => {
+    const userBrands = userDoc.data().brand || [];
+    console.log(userBrands);
+    return userBrands.includes(oldName);
+  });
+
+  // Step 3: Update users' brand arrays
+  for (const userDoc of usersToUpdate) {
+
+    const userRef = doc(db, "users", userDoc.id);
+    console.log(userRef);
+    
+    const updatedBrands = userDoc.data().brand.map((brand) =>
+      brand === oldName ? newName : brand
+    );
+
+    await updateDoc(userRef, { brand: updatedBrands });
+  }
+};
+
+export const deleteBrandFromFirestore = async (id, brandNamesToDelete) => {
+  const brandsCollection = collection(db, "brands");
+  const usersCollection = collection(db, "users");
+
+  // Step 1: Find the brand document and delete it
+  const brandRef = doc(db, "brands", id);
+  await deleteDoc(brandRef);
+  console.log('brandNamesToDelete:', brandNamesToDelete);
+  // Step 2: Find all users who have any of the brand names to be deleted in their brands array
+  const usersSnapshot = await getDocs(usersCollection);
+  const usersToUpdate = usersSnapshot.docs.filter((userDoc) => {
+    const userBrands = userDoc.data().brand || []; 
+    console.log(userBrands);
+    return userBrands.some((brand) => brandNamesToDelete.includes(brand));
+  });
+
+  console.log(usersToUpdate);
+  
+  // Step 3: Update users' brand arrays to remove any of the brands to delete
+  for (const userDoc of usersToUpdate) {
+    const userRef = doc(db, "users", userDoc.id);
+
+    // Remove all matching brands from the user's brand array
+    const updatedBrands = userDoc.data().brand.filter((brand) => !brandNamesToDelete.includes(brand));
+    
+
+    await updateDoc(userRef, { brand: updatedBrands });
+  }
+};
 export const fetchUsers = async () => {
   const usersCollection = collection(db, "users");
   const usersSnapshot = await getDocs(usersCollection);
