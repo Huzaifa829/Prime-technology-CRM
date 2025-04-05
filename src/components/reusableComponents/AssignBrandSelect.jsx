@@ -1,13 +1,26 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { X } from "lucide-react";
 
-export default function AssignBrandSelect({ brands = [], onChange }) {
-  const [selectedBrands, setSelectedBrands] = useState([]);
-  const [searchTerm, setSearchTerm] = useState(""); // Handle search
+export default function AssignBrandSelect({ 
+  brands = [], 
+  onChange,
+  defaultSelectedBrands = [] // New prop for default selected brands
+}) {
+  const [selectedBrands, setSelectedBrands] = useState(defaultSelectedBrands);
+  const [searchTerm, setSearchTerm] = useState("");
+
+  // Initialize with default selected brands
+  useEffect(() => {
+    if (defaultSelectedBrands.length > 0) {
+      onChange(defaultSelectedBrands);
+    }
+  }, [defaultSelectedBrands, onChange]);
 
   const handleSelect = (brandName) => {
+    console.log(brandName);
+    
     setSelectedBrands((prevSelected) => {
       let updatedSelection;
       if (prevSelected.includes(brandName)) {

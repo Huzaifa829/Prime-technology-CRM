@@ -32,7 +32,7 @@ export const userSlice = createSlice({
       state.userData = state.userData.map((user) => (
         {
         ...user,
-        brands: user.brand?.filter((brand) => brand !== brandName) || [],
+        brand: user.brand?.filter((brand) => brand !== brandName) || [],
       }));
     },
   },

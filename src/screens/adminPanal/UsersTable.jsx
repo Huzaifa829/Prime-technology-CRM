@@ -1,20 +1,40 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Card } from "@/components/ui/card";
-import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
-import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
+import {
+  Table,
+  TableHeader,
+  TableRow,
+  TableHead,
+  TableBody,
+  TableCell,
+} from "@/components/ui/table";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 import { Settings, Plus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { fetchUsers } from "@/DB/firebaseFunctions";
 import { addUserData } from "@/Redux-config/reducers/userSlice";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { auth } from "@/DB/firebase.config";
+import UserSettingsModal from "./modals/UserSettingsModal";
 
 export default function UsersTable() {
   const dispatch = useDispatch();
-  const UserRedux = useSelector(state => state.user.userData);
+  const UserRedux = useSelector((state) => state.user.userData);
 
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -27,6 +47,21 @@ export default function UsersTable() {
   const [sortOrder, setSortOrder] = useState("asc"); // "asc" or "desc"
   // Maximum number of brands to display before showing the badge
   const maxVisibleBrands = 3;
+
+
+
+  const [selectedUser, setSelectedUser] = useState(null);
+const [isModalOpen, setIsModalOpen] = useState(false);
+
+const openSettingsModal = (user) => {
+  setSelectedUser(user);
+  setIsModalOpen(true);
+};
+
+const closeSettingsModal = () => {
+  setSelectedUser(null);
+  setIsModalOpen(false);
+};
 
   useEffect(() => {
     if (UserRedux.length === 0) {
@@ -50,15 +85,17 @@ export default function UsersTable() {
 
   // Apply search and filter
   const filteredUsers = users
-    .filter(user =>
-      (user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.email?.toLowerCase().includes(searchTerm.toLowerCase())) &&
-      (roleFilter === "All" || user.role?.toLowerCase() === roleFilter.toLowerCase())
+    .filter(
+      (user) =>
+        (user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          user.email?.toLowerCase().includes(searchTerm.toLowerCase())) &&
+        (roleFilter === "All" ||
+          user.role?.toLowerCase() === roleFilter.toLowerCase())
     )
-    .sort((a, b) => 
+    .sort((a, b) =>
       sortOrder === "asc"
-        ? a.name?.localeCompare(b.name || '')
-        : b.name?.localeCompare(a.name || '')
+        ? a.name?.localeCompare(b.name || "")
+        : b.name?.localeCompare(a.name || "")
     );
 
   // Get current page users
@@ -81,9 +118,9 @@ export default function UsersTable() {
           className="w-full sm:w-1/3"
         />
 
-        <Select 
-          value={roleFilter} 
-          onValueChange={(value) => setRoleFilter(value)} 
+        <Select
+          value={roleFilter}
+          onValueChange={(value) => setRoleFilter(value)}
           className="w-full sm:w-1/4"
         >
           <SelectTrigger className="h-10">
@@ -95,8 +132,8 @@ export default function UsersTable() {
             <SelectItem value="Employee">Employee</SelectItem>
           </SelectContent>
         </Select>
-        
-        <Button 
+
+        <Button
           onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
           className="w-full sm:w-auto"
           size="sm"
@@ -130,22 +167,30 @@ export default function UsersTable() {
                   <TableCell className="font-medium">{user.name}</TableCell>
                   <TableCell className="text-sm">{user.email}</TableCell>
                   <TableCell>
-                    <Badge variant="outline" className="text-xs sm:text-sm">{user.role}</Badge>
+                    <Badge variant="outline" className="text-xs sm:text-sm">
+                      {user.role}
+                    </Badge>
                   </TableCell>
                   <TableCell>
                     {user.brand?.length > 0 ? (
                       <div className="flex flex-wrap gap-1">
                         {/* Show only first maxVisibleBrands brands */}
-                        {user.brand.slice(0, maxVisibleBrands).map((brand, i) => (
-                          <Badge key={i} className="bg-gray-200 text-gray-800 px-2 py-1 text-xs rounded-md">
-                            {brand}
-                          </Badge>
-                        ))}
-                        
+                        {user.brand
+                          .slice(0, maxVisibleBrands)
+                          .map((brand, i) => (
+                            <Badge
+                              key={i}
+                              className="bg-gray-200 text-gray-800 px-2 py-1 text-xs rounded-md"
+                            >
+                              {brand}
+                            </Badge>
+                          ))}
+
                         {/* If more than maxVisibleBrands brands, show "+X more" badge */}
                         {user.brand.length > maxVisibleBrands && (
                           <Badge className="bg-primary text-white px-2 py-1 text-xs rounded-md cursor-pointer">
-                            <Plus className="h-3 w-3 mr-1 inline" /> {user.brand.length - maxVisibleBrands} more
+                            <Plus className="h-3 w-3 mr-1 inline" />{" "}
+                            {user.brand.length - maxVisibleBrands} more
                           </Badge>
                         )}
                       </div>
@@ -160,12 +205,17 @@ export default function UsersTable() {
                     )}
                   </TableCell>
                   <TableCell>
-                    <Settings className="w-5 h-5 cursor-pointer text-gray-600 hover:text-gray-800" />
+                    <Settings
+                      onClick={() => openSettingsModal(user)}
+                      className="w-5 h-5 cursor-pointer text-gray-600 hover:text-gray-800"
+                    />
                   </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
+          <UserSettingsModal open={isModalOpen} onClose={closeSettingsModal} user={selectedUser} />
+
         </div>
       )}
 
